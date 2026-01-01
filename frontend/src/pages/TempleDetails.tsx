@@ -145,9 +145,8 @@ const TempleDetails = () => {
                                 height="100%"
                                 frameBorder="0"
                                 style={{ border: 0 }}
-                                src={`https://www.google.com/maps/embed/v1/place?key=REPLACE_WITH_ACTUAL_API_KEY&q=${temple.mapQuery}`}
+                                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'REPLACE_WITH_ACTUAL_API_KEY'}&q=${temple.mapQuery}`}
                                 allowFullScreen
-                            // Note: For dynamic use without API key, using generic search URL as fallback
                             ></iframe>
                             {/* Generic Fallback iframe for demo if key is missing */}
                             <div className="absolute inset-0 pointer-events-none border-t-8 border-saffron/20"></div>
