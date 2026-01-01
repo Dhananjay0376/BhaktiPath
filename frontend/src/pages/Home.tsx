@@ -20,6 +20,7 @@ const Home = () => {
                     {templesData.map((temple) => (
                         <TempleCard
                             key={temple.id}
+                            id={temple.id}
                             name={temple.name}
                             location={temple.location}
                             description={temple.description}

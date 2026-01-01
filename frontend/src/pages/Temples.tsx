@@ -22,16 +22,15 @@ const Temples = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
                 {templesData.map((temple) => (
-                    <Link to={`/temples/${temple.id}`} key={temple.id} className="h-96 block group">
-                        {/* Wrapping in div to ensure height constraint for 3D card */}
-                        <TempleCard
-                            name={temple.name}
-                            description={temple.description}
-                            image={temple.image}
-                            location={temple.location}
-                            timings={temple.timings}
-                        />
-                    </Link>
+                    <TempleCard
+                        key={temple.id}
+                        id={temple.id}
+                        name={temple.name}
+                        description={temple.description}
+                        image={temple.image}
+                        location={temple.location}
+                        timings={temple.timings}
+                    />
                 ))}
             </div>
         </div>
