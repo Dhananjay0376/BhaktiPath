@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import TempleCard from '../components/TempleCard';
 import RevealText from '../components/RevealText';
 import { motion } from 'framer-motion';
