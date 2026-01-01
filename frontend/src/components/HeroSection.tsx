@@ -36,6 +36,16 @@ const HeroSection = () => {
                 style={{ y: textY, opacity: textOpacity }}
                 className="relative z-10 text-center px-4 max-w-5xl mx-auto"
             >
+                {/* Deployment Verification Badge */}
+                <motion.div
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8, delay: 0.2 }}
+                    className="inline-block mb-6 px-4 py-1.5 rounded-full bg-saffron/10 border border-saffron/30 backdrop-blur-sm"
+                >
+                    <span className="text-saffron font-medium tracking-widest text-sm uppercase">Bhaktipath Official ✨</span>
+                </motion.div>
+
                 <motion.h1
                     initial={{ opacity: 0, y: 100 }}
                     animate={{ opacity: 1, y: 0 }}
