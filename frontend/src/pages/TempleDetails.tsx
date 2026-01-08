@@ -1,11 +1,15 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { MapPin, Clock, ArrowLeft, Info, Compass } from 'lucide-react';
+import { MapPin, Clock, Plus, Compass, ArrowLeft, Info } from 'lucide-react';
 import { templesData } from '../data/templesData';
-import Pushpanjali from '../components/Pushpanjali';
+import { useAuth } from '../context/AuthContext';
+import { usePlanner } from '../context/PlannerContext';
 
 const TempleDetails = () => {
     const { id } = useParams<{ id: string }>();
+    const { user } = useAuth();
+    const { openPlanner } = usePlanner();
+
     const temple = templesData.find(t => t.id === Number(id));
 
     if (!temple) return (
@@ -197,9 +201,20 @@ const TempleDetails = () => {
             </section>
 
             {/* Interactive Offering */}
-            <div className="fixed bottom-10 right-10 z-50">
-                <Pushpanjali />
-            </div>
+            {user && temple && (
+                <motion.button
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => openPlanner({ id: temple.id, name: temple.name })}
+                    className="fixed bottom-28 right-10 z-50 p-4 bg-saffron-dark text-white rounded-full shadow-2xl border-2 border-white/20 hover:bg-saffron transition-colors group"
+                >
+                    <Plus size={24} />
+                    <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 text-white text-xs py-1 px-3 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        Add to Journey
+                    </span>
+                </motion.button>
+            )}
+
         </div>
     );
 };
