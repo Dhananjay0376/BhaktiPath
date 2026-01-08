@@ -1,12 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { MapPin, Calendar, Trash2, ChevronRight, Loader2, Map as MapIcon, Clock, GripVertical, Compass } from 'lucide-react';
-import { deleteDoc, doc, updateDoc } from 'firebase/firestore';
-import { Check } from 'lucide-react';
+import { MapPin, Calendar, Trash2, ChevronRight, Loader2, Map as MapIcon, Clock, GripVertical, Compass, Check } from 'lucide-react';
 
 const PlanTrip = () => {
     const { user } = useAuth();
@@ -24,37 +22,55 @@ const PlanTrip = () => {
         }
     }, [user, navigate]);
 
-    // Fetch User's Trips
+
+    // Fetch User's Trips (Real-time)
     useEffect(() => {
-        if (user) {
-            const fetchTrips = async () => {
-                const q = query(collection(db, 'trips'), where('userId', '==', user.uid));
-                const querySnapshot = await getDocs(q);
-                const userTrips = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                setTrips(userTrips);
-            };
-            fetchTrips();
-        }
+        if (!user) return;
+
+        const q = query(collection(db, 'trips'), where('userId', '==', user.uid));
+        const unsubscribe = onSnapshot(q, (querySnapshot) => {
+            const userTrips = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+            // Sort by createdAt descending if not already sorted by Firestore
+            const sortedTrips = userTrips.sort((a: any, b: any) =>
+                (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
+            );
+            setTrips(sortedTrips);
+
+            // If the currently selected trip was updated elsewhere (e.g., temples added), 
+            // sync the selectedTrip state
+            setSelectedTrip((prev: any) => {
+                if (!prev) return null;
+                const updated = sortedTrips.find(t => t.id === prev.id);
+                return updated || null;
+            });
+        }, (error) => {
+            console.error("Error listening to trips:", error);
+        });
+
+        return () => unsubscribe();
     }, [user]);
 
     const handleCreateTrip = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!tripName) return;
+        if (!tripName || !user) return;
 
         setLoading(true);
         try {
-            const newTrip = {
+            const newTripData: any = {
                 name: tripName,
                 userId: user.uid,
                 createdAt: new Date(),
                 status: 'Draft',
                 temples: []
             };
-            const docRef = await addDoc(collection(db, 'trips'), newTrip);
+            const docRef = await addDoc(collection(db, 'trips'), newTripData);
+
             setTripName('');
-            setTrips([{ id: docRef.id, ...newTrip }, ...trips]);
+            // No need to setTrips manually, onSnapshot will handle it.
+            setSelectedTrip({ id: docRef.id, ...newTripData });
         } catch (error) {
             console.error("Error creating trip:", error);
+            alert("Failed to create journey. Please check your connection.");
         } finally {
             setLoading(false);
         }
