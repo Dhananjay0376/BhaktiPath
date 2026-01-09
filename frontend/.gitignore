@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # Logs
 logs
 *.log
@@ -8,19 +7,8 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-=======
 # Dependencies
-node_modules/
+node_modules
 .pnp
 .pnp.js
 
@@ -28,7 +16,8 @@ node_modules/
 coverage/
 
 # Production
-dist/
+dist
+dist-ssr
 build/
 
 # Environment Variables
@@ -37,25 +26,16 @@ build/
 .env.development.local
 .env.test.local
 .env.production.local
+*.local
 
-# Logs
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-
-# IDEs and Editors
-.vscode/
-.idea/
->>>>>>> fae88976712c3e276a1c095875d55f29c5053b80
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
-<<<<<<< HEAD
-=======
-
-# OS Files
-.DS_Store
 Thumbs.db
->>>>>>> fae88976712c3e276a1c095875d55f29c5053b80
