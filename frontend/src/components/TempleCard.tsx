@@ -1,7 +1,8 @@
 import React, { useRef } from 'react';
 import { motion, useMotionTemplate, useMotionValue, useSpring } from 'framer-motion';
-import { MapPin, Clock } from 'lucide-react';
+import { MapPin, Clock, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { usePlanner } from '../context/PlannerContext';
 
 interface TempleProps {
     id: number;
@@ -16,6 +17,7 @@ const ROTATION_RANGE = 32.5;
 const HALF_ROTATION_RANGE = 32.5 / 2;
 
 const TempleCard: React.FC<TempleProps> = ({ id, name, description, image, location, timings }) => {
+    const { openPlanner } = usePlanner();
     const ref = useRef<HTMLDivElement>(null);
 
     const x = useMotionValue(0);
@@ -49,6 +51,12 @@ const TempleCard: React.FC<TempleProps> = ({ id, name, description, image, locat
         y.set(0);
     };
 
+    const handleAddClick = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openPlanner({ id, name });
+    };
+
     return (
         <Link to={`/temples/${id}`} className="block h-96 w-full">
             <motion.div
@@ -77,6 +85,15 @@ const TempleCard: React.FC<TempleProps> = ({ id, name, description, image, locat
                         />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-80"></div>
                     </div>
+
+                    {/* Add to Journey Button */}
+                    <button
+                        onClick={handleAddClick}
+                        className="absolute top-4 right-4 z-20 p-2 bg-saffron/90 text-white rounded-full hover:bg-saffron hover:scale-110 transition-all opacity-0 group-hover:opacity-100 shadow-xl border border-white/20"
+                        title="Add to Journey"
+                    >
+                        <Plus size={20} />
+                    </button>
 
                     {/* Content */}
                     <div className="relative z-10 p-6 flex flex-col h-full justify-end text-white"

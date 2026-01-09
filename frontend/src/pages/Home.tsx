@@ -4,6 +4,7 @@ import RevealText from '../components/RevealText';
 import { templesData } from '../data/templesData';
 
 const Home = () => {
+    // DEPLOY_VERIFY: 2026-01-08T21:23:00
     return (
         <div className="pb-20">
             <HeroSection />
