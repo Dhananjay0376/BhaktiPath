@@ -1,10 +1,15 @@
 import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import { motion, useScroll, useSpring } from 'framer-motion';
 import { regionsData, type Region } from '../data/regionsData';
 import { Link } from 'react-router-dom';
 import { MapPin, ArrowRight } from 'lucide-react';
 
-const Card: React.FC<{ region: Region; index: number; isLeft: boolean }> = ({ region, index, isLeft }) => {
+interface CardProps {
+    region: Region;
+    isLeft: boolean;
+}
+
+const Card = ({ region, isLeft }: CardProps) => {
     return (
         <motion.div
             initial={{ opacity: 0, x: isLeft ? -100 : 100 }}
@@ -94,7 +99,7 @@ const DivinePath: React.FC = () => {
                                 {/* Actually, the Card component is hardcoded to be 1/2 width either left or right. 
                                     We need a container that centers the items relative to the spine. */}
 
-                                <Card region={region} index={index} isLeft={isLeft} />
+                                <Card region={region} isLeft={isLeft} />
                             </div>
                         );
                     })}

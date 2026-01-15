@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Menu, X, ArrowRight, User as UserIcon } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
-import { templesData } from '../data/templesData';
 import { regionsData } from '../data/regionsData';
 
 const Navbar = () => {
