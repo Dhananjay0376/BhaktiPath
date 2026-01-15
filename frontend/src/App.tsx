@@ -101,6 +101,9 @@ const AnimatedRoutes = () => {
 };
 
 function App() {
+  // DEPLOY_CHECK: V2.0 Mobile Optimization
+  console.log("BhaktiPath V2.0 - Mobile Optimization Live 🚀");
+
   return (
     <AuthProvider>
       <PlannerProvider>
