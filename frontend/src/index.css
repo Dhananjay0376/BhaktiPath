@@ -30,3 +30,17 @@
 .text-gradient-gold {
   @apply bg-clip-text text-transparent bg-gradient-to-r from-saffron to-gold;
 }
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% center;
+  }
+
+  100% {
+    background-position: -200% center;
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 8s linear infinite;
+}

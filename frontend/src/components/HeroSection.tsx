@@ -60,11 +60,13 @@ const HeroSection = () => {
                     transition={{ duration: 0.5, delay: 0.8 }}
                     className="flex flex-col sm:flex-row gap-6 justify-center"
                 >
-                    <button className="group px-10 py-5 bg-gradient-to-r from-saffron to-saffron-dark text-white font-bold rounded-full text-xl transition-all transform hover:scale-105 shadow-xl hover:shadow-saffron/50 flex items-center justify-center gap-3 relative overflow-hidden">
-                        <span className="relative z-10">Start Darshan</span>
-                        <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform relative z-10" />
-                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>
-                    </button>
+                    <Link to="/temples">
+                        <button className="group px-10 py-5 bg-gradient-to-r from-saffron to-saffron-dark text-white font-bold rounded-full text-xl transition-all transform hover:scale-105 shadow-xl hover:shadow-saffron/50 flex items-center justify-center gap-3 relative overflow-hidden">
+                            <span className="relative z-10">Start Darshan</span>
+                            <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform relative z-10" />
+                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-in-out"></div>
+                        </button>
+                    </Link>
 
                     <Link to="/plan-trip">
                         <button className="px-10 py-5 bg-white/5 backdrop-blur-md border border-white/30 text-white font-bold rounded-full text-xl transition-all hover:bg-white/10 hover:border-gold shadow-lg">

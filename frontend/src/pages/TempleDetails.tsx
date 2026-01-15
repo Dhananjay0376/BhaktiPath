@@ -1,9 +1,24 @@
 import { useParams, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { MapPin, Clock, Plus, Compass, ArrowLeft, Info } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import icon from 'leaflet/dist/images/marker-icon.png';
+import iconShadow from 'leaflet/dist/images/marker-shadow.png';
+
+// Fix for default marker icon
+const DefaultIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41]
+});
+L.Marker.prototype.options.icon = DefaultIcon;
 import { templesData } from '../data/templesData';
 import { useAuth } from '../context/AuthContext';
 import { usePlanner } from '../context/PlannerContext';
+import WeatherWidget from '../components/WeatherWidget';
+import ChatBot from '../components/ChatBot';
 
 const TempleDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -131,47 +146,46 @@ const TempleDetails = () => {
                         </div>
                     </motion.div>
                 </div>
+
             </section>
 
-            {/* Bottom Part: Map and Address */}
+            {/* Bottom Part: Map, Address, and Chatbot */}
             <section className="bg-saffron/5 border-y border-gold/10 py-20 px-4 md:px-8 mt-12">
-                <div className="max-w-7xl mx-auto">
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                <div className="max-w-7xl mx-auto space-y-16">
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
                         {/* Map Section */}
                         <motion.div
                             initial={{ opacity: 0, y: 30 }}
                             whileInView={{ opacity: 1, y: 0 }}
-                            className="rounded-3xl overflow-hidden shadow-2xl border-8 border-white h-[400px] relative"
+                            className="rounded-3xl overflow-hidden shadow-2xl border-8 border-white h-[400px] relative order-2 lg:order-1"
                         >
-                            <iframe
-                                title="Temple Location"
-                                width="100%"
-                                height="100%"
-                                frameBorder="0"
-                                style={{ border: 0 }}
-                                src={`https://www.google.com/maps/embed/v1/place?key=${import.meta.env.VITE_GOOGLE_MAPS_API_KEY || 'REPLACE_WITH_ACTUAL_API_KEY'}&q=${temple.mapQuery}`}
-                                allowFullScreen
-                            ></iframe>
-                            {/* Generic Fallback iframe for demo if key is missing */}
-                            <div className="absolute inset-0 pointer-events-none border-t-8 border-saffron/20"></div>
-                            <iframe
-                                title="Temple Location Generic"
-                                width="100%"
-                                height="100%"
-                                src={`https://maps.google.com/maps?q=${temple.mapQuery}&t=&z=15&ie=UTF8&iwloc=&output=embed`}
-                                frameBorder="0"
-                                scrolling="no"
-                                marginHeight={0}
-                                marginWidth={0}
-                                className="w-full h-full"
-                            ></iframe>
+                            <div className="h-full w-full z-10 relative">
+                                <MapContainer
+                                    key={temple.id}
+                                    center={temple.coordinates || [27.5706, 77.6908]}
+                                    zoom={15}
+                                    scrollWheelZoom={false}
+                                    className="h-full w-full"
+                                    style={{ height: '100%', width: '100%', zIndex: 10 }}
+                                >
+                                    <TileLayer
+                                        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                                        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                    />
+                                    <Marker position={temple.coordinates || [27.5706, 77.6908]}>
+                                        <Popup>
+                                            {temple.name} <br /> {temple.location}
+                                        </Popup>
+                                    </Marker>
+                                </MapContainer>
+                            </div>
                         </motion.div>
 
-                        {/* Address and Directions */}
+                        {/* Address and Weather */}
                         <motion.div
                             initial={{ opacity: 0, scale: 0.95 }}
                             whileInView={{ opacity: 1, scale: 1 }}
-                            className="space-y-6"
+                            className="space-y-8 order-1 lg:order-2"
                         >
                             <div className="space-y-2">
                                 <h4 className="text-saffron-dark font-serif text-3xl">Pavitra Sthan</h4>
@@ -189,33 +203,58 @@ const TempleDetails = () => {
                             </div>
 
                             <button
-                                className="group px-8 py-4 bg-gradient-to-r from-saffron to-saffron-dark text-white font-bold rounded-2xl shadow-xl hover:shadow-saffron/40 transition-all flex items-center gap-3 active:scale-95"
+                                className="group px-8 py-4 bg-gradient-to-r from-saffron to-saffron-dark text-white font-bold rounded-2xl shadow-xl hover:shadow-saffron/40 transition-all flex items-center gap-3 active:scale-95 w-full sm:w-auto justify-center"
                                 onClick={() => window.open(`https://www.google.com/maps/search/?api=1&query=${temple.mapQuery}`, '_blank')}
                             >
                                 <Compass className="group-hover:rotate-45 transition-transform" />
                                 Open Navigation
                             </button>
+
+                            <div className="pt-4">
+                                <WeatherWidget
+                                    latitude={temple.coordinates?.[0] || 27.5706}
+                                    longitude={temple.coordinates?.[1] || 77.6908}
+                                    locationName={temple.location}
+                                />
+                            </div>
                         </motion.div>
                     </div>
+
+                    {/* Chatbot Section - Full Width Below */}
+                    <div className="border-t border-gold/10 pt-12">
+                        <div className="max-w-3xl mx-auto">
+                            <div className="text-center mb-8">
+                                <h3 className="text-2xl font-serif text-saffron-dark mb-2">Temple Guide</h3>
+                                <p className="text-gold-dark">Ask questions about the history, significance, or rituals.</p>
+                            </div>
+                            <ChatBot
+                                templeName={temple.name}
+                                templeLocation={temple.location}
+                                templeDescription={temple.description}
+                            />
+                        </div>
+                    </div>
                 </div>
-            </section>
+            </section >
 
             {/* Interactive Offering */}
-            {user && temple && (
-                <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => openPlanner({ id: temple.id, name: temple.name })}
-                    className="fixed bottom-28 right-10 z-50 p-4 bg-saffron-dark text-white rounded-full shadow-2xl border-2 border-white/20 hover:bg-saffron transition-colors group"
-                >
-                    <Plus size={24} />
-                    <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 text-white text-xs py-1 px-3 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
-                        Add to Journey
-                    </span>
-                </motion.button>
-            )}
+            {
+                user && temple && (
+                    <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => openPlanner({ id: temple.id, name: temple.name })}
+                        className="fixed bottom-28 right-10 z-50 p-4 bg-saffron-dark text-white rounded-full shadow-2xl border-2 border-white/20 hover:bg-saffron transition-colors group"
+                    >
+                        <Plus size={24} />
+                        <span className="absolute right-full mr-4 top-1/2 -translate-y-1/2 bg-black/80 text-white text-xs py-1 px-3 rounded-md opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                            Add to Journey
+                        </span>
+                    </motion.button>
+                )
+            }
 
-        </div>
+        </div >
     );
 };
 

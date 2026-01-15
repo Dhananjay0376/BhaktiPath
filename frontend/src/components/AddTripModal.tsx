@@ -4,34 +4,46 @@ import { Plus, Loader2, Check, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { usePlanner } from '../context/PlannerContext';
 import { db } from '../firebase/config';
-import { collection, query, where, getDocs, updateDoc, doc, arrayUnion, addDoc } from 'firebase/firestore';
+import { collection, updateDoc, doc, arrayUnion, addDoc } from 'firebase/firestore';
 
 const AddTripModal = () => {
     const { user } = useAuth();
-    const { isPlannerOpen, closePlanner, activeTemple } = usePlanner();
-    const [trips, setTrips] = useState<any[]>([]);
-    const [loadingTrips, setLoadingTrips] = useState(false);
+    const { isPlannerOpen, closePlanner, activeTemple, activeTripId, activeTripName, trips, loadingTrips } = usePlanner();
     const [addingToTrip, setAddingToTrip] = useState<string | null>(null);
+    const [isDirectAdding, setIsDirectAdding] = useState(false);
     const [successMessage, setSuccessMessage] = useState('');
 
+    // Safety net: Reset states when modal closes
     useEffect(() => {
-        if (user && isPlannerOpen) {
-            fetchUserTrips();
+        if (!isPlannerOpen) {
+            setIsDirectAdding(false);
+            setAddingToTrip(null);
+            setSuccessMessage('');
         }
-    }, [user, isPlannerOpen]);
+    }, [isPlannerOpen]);
 
-    const fetchUserTrips = async () => {
-        if (!user) return;
-        setLoadingTrips(true);
+    useEffect(() => {
+        if (user && isPlannerOpen && activeTripId && !isDirectAdding && !successMessage) {
+            const timer = setTimeout(() => {
+                handleDirectAdd();
+            }, 100); // Small delay to ensure state stability
+            return () => clearTimeout(timer);
+        }
+    }, [user, isPlannerOpen, activeTripId]);
+
+    const handleDirectAdd = async () => {
+        if (!activeTripId || !activeTemple || isDirectAdding || successMessage) return;
+
+        setIsDirectAdding(true);
         try {
-            const q = query(collection(db, 'trips'), where('userId', '==', user.uid));
-            const querySnapshot = await getDocs(q);
-            const userTrips = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as any));
-            setTrips(userTrips);
+            // Ensure we have trips loaded before trying to find the order
+            if (trips.length === 0 && loadingTrips) {
+                // Wait a bit for trips or try anyway (handleAddToTrip handles empty trips)
+            }
+            await handleAddToTrip(activeTripId);
         } catch (error) {
-            console.error("Error fetching trips:", error);
-        } finally {
-            setLoadingTrips(false);
+            console.error("Direct add failed:", error);
+            setIsDirectAdding(false);
         }
     };
 
@@ -48,14 +60,19 @@ const AddTripModal = () => {
                     order: trips.find(t => t.id === tripId)?.temples?.length || 0
                 })
             });
-            setSuccessMessage('Added to your journey!');
+            setSuccessMessage(`Added to ${activeTripName || 'your journey'}!`);
+
+            // Critical: Turn off "Adding..." states immediately
+            setIsDirectAdding(false);
+            setAddingToTrip(null);
+
             setTimeout(() => {
-                setSuccessMessage('');
                 closePlanner();
-            }, 2000);
+            }, 1500); // Slightly more time to read success
         } catch (error) {
             console.error("Error adding temple to trip:", error);
-        } finally {
+            alert("Could not add temple. Please check your connection.");
+            setIsDirectAdding(false);
             setAddingToTrip(null);
         }
     };
@@ -81,7 +98,7 @@ const AddTripModal = () => {
             setTimeout(() => {
                 setSuccessMessage('');
                 closePlanner();
-            }, 2000);
+            }, 1000); // Reduced for snappiness
         } catch (error) {
             console.error("Error creating and adding trip:", error);
         } finally {
@@ -130,11 +147,20 @@ const AddTripModal = () => {
                                     </button>
                                 </div>
                             ) : successMessage ? (
-                                <div className="flex flex-col items-center justify-center py-8 text-saffron-dark space-y-4">
-                                    <div className="p-4 bg-saffron/10 rounded-full">
+                                <div className="flex flex-col items-center justify-center py-12 text-saffron-dark space-y-4">
+                                    <motion.div
+                                        initial={{ scale: 0 }}
+                                        animate={{ scale: 1 }}
+                                        className="p-4 bg-saffron/10 rounded-full"
+                                    >
                                         <Check size={48} />
-                                    </div>
+                                    </motion.div>
                                     <p className="font-bold text-xl">{successMessage}</p>
+                                </div>
+                            ) : isDirectAdding ? (
+                                <div className="flex flex-col items-center justify-center py-12 text-saffron-dark space-y-4">
+                                    <Loader2 className="animate-spin text-saffron" size={48} />
+                                    <p className="font-bold text-lg animate-pulse">Adding to {activeTripName}...</p>
                                 </div>
                             ) : (
                                 <div className="space-y-3">

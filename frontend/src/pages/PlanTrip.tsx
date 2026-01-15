@@ -1,19 +1,42 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { collection, addDoc, query, where, onSnapshot, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { collection, addDoc, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase/config';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { MapPin, Calendar, Trash2, ChevronRight, Loader2, Map as MapIcon, Clock, GripVertical, Compass, Check } from 'lucide-react';
+import { MapPin, Calendar, Trash2, ChevronRight, Loader2, Map as MapIcon, Clock, GripVertical, Compass, Check, Sparkles } from 'lucide-react';
+import { usePlanner } from '../context/PlannerContext';
+import { templesData } from '../data/templesData';
+import AIDivineGuide from '../components/AIDivineGuide';
+
+// Haversine formula to calculate distance between two points in km
+function calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number) {
+    const R = 6371; // Radius of the earth in km
+    const dLat = deg2rad(lat2 - lat1);
+    const dLon = deg2rad(lon2 - lon1);
+    const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    const d = R * c; // Distance in km
+    return d;
+}
+
+function deg2rad(deg: number) {
+    return deg * (Math.PI / 180);
+}
 
 const PlanTrip = () => {
     const { user } = useAuth();
     const navigate = useNavigate();
+    const { setActiveTrip, activeTripId, trips } = usePlanner();
     const [tripName, setTripName] = useState('');
-    const [trips, setTrips] = useState<any[]>([]);
     const [loading, setLoading] = useState(false);
     const [selectedTrip, setSelectedTrip] = useState<any>(null);
     const [deletingTrip, setDeletingTrip] = useState<string | null>(null);
+    const [optimizing, setOptimizing] = useState(false);
+    const [showAIGuide, setShowAIGuide] = useState(false);
 
     // Redirect if not logged in
     useEffect(() => {
@@ -23,32 +46,16 @@ const PlanTrip = () => {
     }, [user, navigate]);
 
 
-    // Fetch User's Trips (Real-time)
+    // Sync selectedTrip when trips change
     useEffect(() => {
-        if (!user) return;
-
-        const q = query(collection(db, 'trips'), where('userId', '==', user.uid));
-        const unsubscribe = onSnapshot(q, (querySnapshot) => {
-            const userTrips = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            // Sort by createdAt descending if not already sorted by Firestore
-            const sortedTrips = userTrips.sort((a: any, b: any) =>
-                (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0)
-            );
-            setTrips(sortedTrips);
-
-            // If the currently selected trip was updated elsewhere (e.g., temples added), 
-            // sync the selectedTrip state
-            setSelectedTrip((prev: any) => {
-                if (!prev) return null;
-                const updated = sortedTrips.find(t => t.id === prev.id);
-                return updated || null;
-            });
-        }, (error) => {
-            console.error("Error listening to trips:", error);
-        });
-
-        return () => unsubscribe();
-    }, [user]);
+        if (!selectedTrip && activeTripId && trips.length > 0) {
+            const active = trips.find(t => t.id === activeTripId);
+            if (active) setSelectedTrip(active);
+        } else if (selectedTrip) {
+            const updated = trips.find(t => t.id === selectedTrip.id);
+            if (updated) setSelectedTrip(updated);
+        }
+    }, [trips, activeTripId, selectedTrip?.id]);
 
     const handleCreateTrip = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,7 +73,7 @@ const PlanTrip = () => {
             const docRef = await addDoc(collection(db, 'trips'), newTripData);
 
             setTripName('');
-            // No need to setTrips manually, onSnapshot will handle it.
+            setActiveTrip(docRef.id, tripName);
             setSelectedTrip({ id: docRef.id, ...newTripData });
         } catch (error) {
             console.error("Error creating trip:", error);
@@ -83,7 +90,6 @@ const PlanTrip = () => {
         setDeletingTrip(tripId);
         try {
             await deleteDoc(doc(db, 'trips', tripId));
-            setTrips(trips.filter(t => t.id !== tripId));
             if (selectedTrip?.id === tripId) setSelectedTrip(null);
         } catch (error) {
             console.error("Error deleting trip:", error);
@@ -91,13 +97,12 @@ const PlanTrip = () => {
             setDeletingTrip(null);
         }
     };
+
     const handleReorder = async (newTemples: any[]) => {
         if (!selectedTrip) return;
 
-        // Update local state immediately for snappy feel
         const updatedTrip = { ...selectedTrip, temples: newTemples };
         setSelectedTrip(updatedTrip);
-        setTrips(trips.map(t => t.id === selectedTrip.id ? updatedTrip : t));
 
         try {
             const tripRef = doc(db, 'trips', selectedTrip.id);
@@ -108,6 +113,104 @@ const PlanTrip = () => {
             console.error("Error updating temple order:", error);
         }
     };
+
+    const handleOptimizeRoute = async () => {
+        if (!selectedTrip || !selectedTrip.temples || selectedTrip.temples.length < 3) {
+            alert("Add at least 3 temples to optimize your route.");
+            return;
+        }
+
+        setOptimizing(true);
+
+        // Simulate thinking time for effect
+        await new Promise(resolve => setTimeout(resolve, 800));
+
+        const temples = [...selectedTrip.temples];
+        const startNode = temples[0]; // Keep start fixed
+        const unvisited = temples.slice(1);
+        const optimizedPath = [startNode];
+
+        let currentLocationId = startNode.id;
+
+        while (unvisited.length > 0) {
+            let nearestIndex = -1;
+            let minDistance = Infinity;
+
+            // Find full data for current location
+            const currentTempleData = templesData.find(t => t.id === Number(currentLocationId));
+            const currentCoords = currentTempleData?.coordinates;
+
+            if (!currentCoords) {
+                // If we can't find coords for current node, just take the next one sequentially
+                optimizedPath.push(...unvisited);
+                break;
+            }
+
+            for (let i = 0; i < unvisited.length; i++) {
+                const target = unvisited[i];
+                const targetTempleData = templesData.find(t => t.id === Number(target.id));
+                const targetCoords = targetTempleData?.coordinates;
+
+                if (!targetCoords) continue;
+
+                const dist = calculateDistance(
+                    currentCoords[0], currentCoords[1],
+                    targetCoords[0], targetCoords[1]
+                );
+
+                if (dist < minDistance) {
+                    minDistance = dist;
+                    nearestIndex = i;
+                }
+            }
+
+            if (nearestIndex !== -1) {
+                const nextNode = unvisited.splice(nearestIndex, 1)[0];
+                optimizedPath.push(nextNode);
+                currentLocationId = nextNode.id;
+            } else {
+                optimizedPath.push(...unvisited);
+                break;
+            }
+        }
+
+        handleReorder(optimizedPath);
+        setOptimizing(false);
+    };
+
+    const calculateTotalStats = () => {
+        if (!selectedTrip || !selectedTrip.temples || selectedTrip.temples.length < 2) return null;
+
+        let totalDist = 0;
+        const temples = selectedTrip.temples;
+
+        for (let i = 0; i < temples.length - 1; i++) {
+            const t1 = temples[i];
+            const t2 = temples[i + 1];
+
+            const t1Data = templesData.find(t => t.id === Number(t1.id));
+            const t2Data = templesData.find(t => t.id === Number(t2.id));
+
+            if (t1Data?.coordinates && t2Data?.coordinates) {
+                totalDist += calculateDistance(
+                    t1Data.coordinates[0], t1Data.coordinates[1],
+                    t2Data.coordinates[0], t2Data.coordinates[1]
+                );
+            }
+        }
+
+        // Estimation: 20km/h avg speed + 30 mins per temple darshan
+        const travelTimeHours = totalDist / 20;
+        const darshanTimeHours = temples.length * 0.5;
+        const totalTimeHours = travelTimeHours + darshanTimeHours;
+
+        return {
+            distance: totalDist.toFixed(1),
+            duration: `${Math.floor(totalTimeHours)}h ${Math.round((totalTimeHours % 1) * 60)}m`
+        };
+    };
+
+    const stats = calculateTotalStats();
 
     const handleRemoveTemple = async (templeId: string) => {
         if (!selectedTrip || !window.confirm("Remove this temple from your journey?")) return;
@@ -203,7 +306,10 @@ const PlanTrip = () => {
                                 trips.map((trip) => (
                                     <div
                                         key={trip.id}
-                                        onClick={() => setSelectedTrip(trip)}
+                                        onClick={() => {
+                                            setSelectedTrip(trip);
+                                            setActiveTrip(trip.id, trip.name);
+                                        }}
                                         className={`p-4 rounded-xl border transition-all cursor-pointer group flex justify-between items-center ${selectedTrip?.id === trip.id
                                             ? 'bg-saffron/10 border-saffron shadow-sm'
                                             : 'bg-white/40 border-white/30 hover:bg-white/60'
@@ -246,7 +352,7 @@ const PlanTrip = () => {
                                 exit={{ opacity: 0, y: -10 }}
                                 className="bg-white/60 backdrop-blur-md rounded-3xl p-8 shadow-2xl border border-white/40 min-h-[500px]"
                             >
-                                <div className="flex justify-between items-start mb-8">
+                                <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
                                     <div>
                                         <h2 className="text-4xl font-serif text-gray-800 mb-2">{selectedTrip.name}</h2>
                                         <div className="flex items-center gap-4 text-sm text-gray-500">
@@ -254,22 +360,56 @@ const PlanTrip = () => {
                                             <span className="px-2 py-0.5 bg-saffron/20 text-saffron-dark rounded-full text-xs font-bold uppercase">{selectedTrip.status}</span>
                                         </div>
                                     </div>
-                                    <div className="flex items-center gap-3">
+                                    <div className="flex flex-wrap items-center gap-3">
+                                        <button
+                                            onClick={() => setShowAIGuide(true)}
+                                            disabled={!selectedTrip.temples?.length}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 text-white rounded-full text-sm font-bold hover:shadow-lg transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                        >
+                                            <Sparkles size={16} /> <span className="hidden sm:inline">Ask Divine Guide</span>
+                                        </button>
+                                        <button
+                                            onClick={handleOptimizeRoute}
+                                            disabled={!selectedTrip.temples?.length || optimizing}
+                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full text-sm font-bold hover:shadow-lg transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                            title="Automatically reorder for shortest distance"
+                                        >
+                                            {optimizing ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
+                                            <span className="hidden sm:inline">Magic Optimize</span>
+                                        </button>
                                         <button
                                             onClick={() => window.open(generateRouteUrl(), '_blank')}
                                             disabled={!selectedTrip.temples?.length}
-                                            className="flex items-center gap-2 px-6 py-2 bg-gradient-to-r from-saffron to-saffron-dark text-white rounded-full text-sm font-bold hover:shadow-lg transition-all shadow-md active:scale-95 disabled:opacity-50"
+                                            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-saffron to-saffron-dark text-white rounded-full text-sm font-bold hover:shadow-lg transition-all shadow-md active:scale-95 disabled:opacity-50"
                                         >
-                                            <Compass size={16} /> View Divine Route
+                                            <Compass size={16} /> <span className="hidden sm:inline">View Divine Route</span>
                                         </button>
                                         <button
                                             onClick={() => navigate(`/temples`)}
-                                            className="flex items-center gap-2 px-6 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium hover:border-saffron hover:text-saffron transition-all shadow-sm"
+                                            className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 rounded-full text-sm font-medium hover:border-saffron hover:text-saffron transition-all shadow-sm"
                                         >
-                                            <MapIcon size={16} /> Add More Temples
+                                            <MapIcon size={16} /> <span className="hidden sm:inline">Add</span>
                                         </button>
                                     </div>
                                 </div>
+
+                                {/* Stats Bar */}
+                                {stats && (
+                                    <div className="mb-6 grid grid-cols-2 md:grid-cols-3 gap-4">
+                                        <div className="bg-white/50 border border-white rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Total Distance</span>
+                                            <span className="text-xl font-serif text-saffron-dark font-bold">{stats.distance} km</span>
+                                        </div>
+                                        <div className="bg-white/50 border border-white rounded-xl p-3 flex flex-col items-center justify-center">
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Est. Duration</span>
+                                            <span className="text-xl font-serif text-gray-800 font-bold">{stats.duration}</span>
+                                        </div>
+                                        <div className="hidden md:flex bg-white/50 border border-white rounded-xl p-3 flex-col items-center justify-center">
+                                            <span className="text-xs text-gray-500 uppercase tracking-wider font-bold">Temples</span>
+                                            <span className="text-xl font-serif text-gray-800 font-bold">{selectedTrip.temples.length} stops</span>
+                                        </div>
+                                    </div>
+                                )}
 
                                 {/* Itinerary Timeline */}
                                 <div className="space-y-4 relative">
@@ -287,7 +427,7 @@ const PlanTrip = () => {
                                         <Reorder.Group axis="y" values={selectedTrip.temples} onReorder={handleReorder} className="space-y-4">
                                             {selectedTrip.temples.map((temple: any, index: number) => (
                                                 <Reorder.Item
-                                                    key={temple.id + temple.addedAt?.seconds}
+                                                    key={temple.id + (temple.addedAt?.seconds || index)}
                                                     value={temple}
                                                     className="relative flex items-center gap-6 group"
                                                 >
@@ -369,6 +509,15 @@ const PlanTrip = () => {
                         )}
                     </AnimatePresence>
                 </motion.div>
+
+                <AnimatePresence>
+                    {showAIGuide && selectedTrip && (
+                        <AIDivineGuide
+                            temples={selectedTrip.temples}
+                            onClose={() => setShowAIGuide(false)}
+                        />
+                    )}
+                </AnimatePresence>
             </div>
         </div>
     );

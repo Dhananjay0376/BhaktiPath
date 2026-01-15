@@ -1,36 +1,26 @@
 import HeroSection from '../components/HeroSection';
-import TempleCard from '../components/TempleCard';
-import RevealText from '../components/RevealText';
-import { templesData } from '../data/templesData';
+import DivineCarousel from '../components/DivineCarousel';
+import FeedbackDisplay from '../components/FeedbackDisplay';
+
 
 const Home = () => {
-    // DEPLOY_VERIFY: 2026-01-08T21:23:00
+    // DEPLOY_VERIFY: 2026-01-08T21:50:00
     return (
-        <div className="pb-20">
+        <div className="relative pb-40 bg-[#fbfbf9] min-h-screen selection:bg-[#332d24] selection:text-white overflow-x-hidden">
             <HeroSection />
 
-            <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
-                <div className="text-center mb-16 space-y-4">
-                    <h2 className="text-4xl font-serif text-saffron-dark mb-4">Sacred Destinations</h2>
-                    <div className="text-2xl font-light leading-relaxed max-w-3xl mx-auto">
-                        <RevealText text="Explore the most revered temples and ghats in the ancient holy land of Braj, where every stone tells a story of devotion." />
-                    </div>
-                </div>
+            {/* Note: Removed the standard text section Intro as the Carousel has its own header/dark mode vibe */}
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {templesData.map((temple) => (
-                        <TempleCard
-                            key={temple.id}
-                            id={temple.id}
-                            name={temple.name}
-                            location={temple.location}
-                            description={temple.description}
-                            timings={temple.timings}
-                            image={temple.image}
-                        />
-                    ))}
-                </div>
-            </section>
+            <DivineCarousel />
+
+            <FeedbackDisplay />
+
+            {/* Minimal Footer Element */}
+            <div className="mt-20 flex flex-col items-center gap-8 opacity-40">
+                <div className="w-[1px] h-32 bg-gradient-to-b from-[#332d24] to-transparent" />
+                <span className="text-[11px] tracking-[0.8em] font-serif uppercase text-[#332d24] font-bold">The Pulse of Devotion</span>
+            </div>
+
         </div>
     );
 };

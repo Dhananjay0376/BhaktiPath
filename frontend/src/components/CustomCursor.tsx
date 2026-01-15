@@ -35,8 +35,9 @@ const CustomCursor = () => {
 
         const handleMouseMove = (e: MouseEvent) => {
             // Update MotionValues directly - No React Re-render!
-            cursorX.set(e.clientX - 4);
-            cursorY.set(e.clientY - 4);
+            // Adjusted offsets to align the feather tip (which is rotated) with the actual mouse pointer
+            cursorX.set(e.clientX - 12);
+            cursorY.set(e.clientY + 12);
 
             // Add sparkle occasionally
             if (Math.random() > 0.8) { // Slightly reduced frequency for performance
@@ -104,7 +105,7 @@ const CustomCursor = () => {
 
             {/* Main Feather Cursor */}
             <motion.div
-                className="fixed top-0 left-0 pointer-events-none z-[100]"
+                className="fixed top-0 left-0 pointer-events-none z-[9999]"
                 style={{
                     x: cursorXSpring,
                     y: cursorYSpring,

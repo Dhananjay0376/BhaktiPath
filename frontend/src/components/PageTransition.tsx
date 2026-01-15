@@ -28,6 +28,10 @@ interface PageTransitionProps {
 }
 
 const PageTransition: React.FC<PageTransitionProps> = ({ children }) => {
+    React.useEffect(() => {
+        window.scrollTo(0, 0);
+    }, []);
+
     return (
         <motion.div
             variants={variants}

@@ -12,6 +12,12 @@ import TempleDetails from './pages/TempleDetails';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import PlanTrip from './pages/PlanTrip';
+import AllFeedbacks from './pages/AllFeedbacks';
+import Food from './pages/Food';
+import Hotels from './pages/Hotels';
+import MapPage from './pages/Map';
+import Team from './pages/Team';
+import YatraGuidelines from './pages/YatraGuidelines';
 import Seed from './pages/Seed';
 import { AuthProvider } from './context/AuthContext';
 import { PlannerProvider } from './context/PlannerContext';
@@ -56,6 +62,36 @@ const AnimatedRoutes = () => {
         <Route path="/plan-trip" element={
           <PageTransition>
             <PlanTrip />
+          </PageTransition>
+        } />
+        <Route path="/feedbacks" element={
+          <PageTransition>
+            <AllFeedbacks />
+          </PageTransition>
+        } />
+        <Route path="/food" element={
+          <PageTransition>
+            <Food />
+          </PageTransition>
+        } />
+        <Route path="/hotels" element={
+          <PageTransition>
+            <Hotels />
+          </PageTransition>
+        } />
+        <Route path="/map" element={
+          <PageTransition>
+            <MapPage />
+          </PageTransition>
+        } />
+        <Route path="/team" element={
+          <PageTransition>
+            <Team />
+          </PageTransition>
+        } />
+        <Route path="/guidelines" element={
+          <PageTransition>
+            <YatraGuidelines />
           </PageTransition>
         } />
         <Route path="/seed" element={<Seed />} />
