@@ -4,7 +4,7 @@ import { Send, Bot, Loader2, Sparkles, X } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 // Initialize Gemini API
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "AIzaSyA_-2SV4Amm2L0TobBGa8GI_svCEJdKv5M";
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY;
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 interface ChatBotProps {
