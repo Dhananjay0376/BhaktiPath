@@ -83,6 +83,20 @@ Contributions are welcome! If you'd like to improve BhaktiPath:
 - LinkedIn: [dhananjay-narula](https://www.linkedin.com/in/dhananjay-narula-6519363a1/)
 - Email: dhananjay0376@gmail.com
 
+## 👥 Team
+
+**Srishti Upadhyay**
+- GitHub: [@Srishti-ui731](https://github.com/Srishti-ui731)
+- LinkedIn: [srishti-upadhyay](https://www.linkedin.com/in/srishti-upadhyay-348206382/)
+- Email: srishtiupadhyay797@gmail.com
+
+## 👥 Team
+
+**Anmol Gola**
+- GitHub: [@ANMOLGOLA](https://github.com/ANMOLGOLA)
+- LinkedIn: [anmolgola](https://www.linkedin.com/in/anmolgola66571/)
+- Email: anmolgola1318@gmail.com
+
 ## 📝 License
 
 This project is open source and available for educational purposes.
