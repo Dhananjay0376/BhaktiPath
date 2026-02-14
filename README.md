@@ -83,7 +83,7 @@ Contributions are welcome! If you'd like to improve BhaktiPath:
 - LinkedIn: [dhananjay-narula](https://www.linkedin.com/in/dhananjay-narula-6519363a1/)
 - Email: dhananjay0376@gmail.com
 
-## 👥 Team
+## 👥 UI UX Designer
 
 **Srishti Upadhyay**
 - GitHub: [@Srishti-ui731](https://github.com/Srishti-ui731)
