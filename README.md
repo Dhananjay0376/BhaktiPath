@@ -97,10 +97,6 @@ Contributions are welcome! If you'd like to improve BhaktiPath:
 - LinkedIn: [anmolgola](https://www.linkedin.com/in/anmolgola66571/)
 - Email: anmolgola1318@gmail.com
 
-## 📝 License
-
-This project is open source and available for educational purposes.
-
 ## 🙏 Acknowledgments
 
 - Built with modern web technologies
